@@ -8,7 +8,6 @@ import org.springframework.stereotype.Repository;
 /**
  * Created by twinkle.zhou on 16/11/14.
  */
-@Repository
 public class TradeOrderRepository {
 
     @Autowired

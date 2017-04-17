@@ -7,8 +7,11 @@ import org.mengyun.tcctransaction.sample.http.capital.api.dto.CapitalTradeOrderD
  * Created by changming.xie on 4/7/17.
  */
 public class CapitalTradeOrderServiceProxy implements CapitalTradeOrderService {
+
     @Override
     public String record(CapitalTradeOrderDto tradeOrderDto) {
+
+
         return null;
     }
 }

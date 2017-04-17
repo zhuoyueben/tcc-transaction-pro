@@ -18,7 +18,6 @@ import java.util.Calendar;
 /**
  * Created by changming.xie on 4/2/16.
  */
-@Service("capitalTradeOrderService")
 public class CapitalTradeOrderServiceImpl implements CapitalTradeOrderService {
 
     @Autowired

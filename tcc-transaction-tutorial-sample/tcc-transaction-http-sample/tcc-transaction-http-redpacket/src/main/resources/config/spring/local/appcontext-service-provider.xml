@@ -1,39 +1,45 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
-       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xmlns:dubbo="http://code.alibabatech.com/schema/dubbo"
-       xmlns:context="http://www.springframework.org/schema/context"
-       xsi:schemaLocation="http://www.springframework.org/schema/beans        http://www.springframework.org/schema/beans/spring-beans.xsd        http://code.alibabatech.com/schema/dubbo        http://code.alibabatech.com/schema/dubbo/dubbo.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:util="http://www.springframework.org/schema/util"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
 
 
-    <context:component-scan base-package="org.mengyun.tcctransaction.sample.dubbo"/>
+    <bean name="redPacketAccountRepository"
+          class="org.mengyun.tcctransaction.sample.http.redpacket.domain.repository.RedPacketAccountRepository"/>
 
-    <dubbo:application name="sample-dubbo-redpacket"/>
+    <bean name="tradeOrderRepository"
+          class="org.mengyun.tcctransaction.sample.http.redpacket.domain.repository.TradeOrderRepository"/>
 
-    <context:property-placeholder location="classpath:sample-dubbo-redpacket.properties"
-                                  ignore-unresolvable="true"/>
+    <bean name="redPacketAccountService"
+          class="org.mengyun.tcctransaction.sample.http.redpacket.service.RedPacketAccountServiceImpl"/>
 
-    <!--<dubbo:registry id="capitalRpcZk" address="multicast://224.5.6.7:1234?unicast=false"/>-->
-    <dubbo:registry id="redPacketRpcZk" protocol="zookeeper" register="true" subscribe="false"
-                    address="${zookeeper.address}" session="${zookeeper.session.timeout}"
-                    timeout="${zookeeper.connect.timeout}" file="./.dubbo/rpc-cache"/>
+    <bean name="redPacketTradeOrderService"
+          class="org.mengyun.tcctransaction.sample.http.redpacket.service.RedPacketTradeOrderServiceImpl"/>
 
-    <!--<dubbo:monitor protocol="registry" />-->
+    <bean name="redPacketAccountServiceExporter"
+          class="org.springframework.remoting.httpinvoker.SimpleHttpInvokerServiceExporter">
+        <property name="service" ref="redPacketAccountService"/>
+        <property name="serviceInterface"
+                  value="org.mengyun.tcctransaction.sample.http.redpacket.api.RedPacketAccountService"/>
+    </bean>
 
-    <!--<dubbo:registry protocol="mulitcast" address="224.5.6.7:1234" />-->
+    <bean name="redPacketTradeOrderServiceExporter"
+          class="org.springframework.remoting.httpinvoker.SimpleHttpInvokerServiceExporter">
+        <property name="service" ref="redPacketTradeOrderService"/>
+        <property name="serviceInterface"
+                  value="org.mengyun.tcctransaction.sample.http.redpacket.api.RedPacketTradeOrderService"/>
+    </bean>
 
-    <!--<dubbo:registry address="N/A" />-->
+    <bean id="httpServer"
+          class="org.springframework.remoting.support.SimpleHttpServerFactoryBean">
+        <property name="contexts">
+            <util:map>
+                <entry key="/remoting/CapitalTradeOrderService" value-ref="redPacketAccountServiceExporter"/>
+                <entry key="/remoting/RedPacketAccountService" value-ref="redPacketTradeOrderServiceExporter"/>
+            </util:map>
+        </property>
+        <property name="port" value="8082"/>
+    </bean>
 
-    <dubbo:protocol name="dubbo" port="${dubbo.port}" payload="52428800"/>
-
-    <dubbo:service interface="RedPacketTradeOrderService"
-                   registry="redPacketRpcZk"
-                   ref="redPacketTradeOrderService" timeout="60000" retries="0"/>
-
-    <dubbo:service interface="RedPacketAccountService"
-                   registry="redPacketRpcZk"
-                   ref="redPacketAccountService" timeout="60000" retries="0"/>
-    <!--<bean id="redPacketTradeOrderService"-->
-          <!--class="RedPacketTradeOrderServiceImpl"/>-->
 
 </beans>

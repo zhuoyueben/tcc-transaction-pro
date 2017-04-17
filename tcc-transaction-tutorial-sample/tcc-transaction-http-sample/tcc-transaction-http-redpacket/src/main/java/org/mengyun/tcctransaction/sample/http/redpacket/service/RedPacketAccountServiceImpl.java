@@ -10,7 +10,6 @@ import java.math.BigDecimal;
 /**
  * Created by twinkle.zhou on 16/11/11.
  */
-@Service("redPacketAccountService")
 public class RedPacketAccountServiceImpl implements RedPacketAccountService {
 
     @Autowired

@@ -18,7 +18,6 @@ import java.util.Calendar;
 /**
  * Created by changming.xie on 4/2/16.
  */
-@Service("redPacketTradeOrderService")
 public class RedPacketTradeOrderServiceImpl implements RedPacketTradeOrderService {
 
     @Autowired

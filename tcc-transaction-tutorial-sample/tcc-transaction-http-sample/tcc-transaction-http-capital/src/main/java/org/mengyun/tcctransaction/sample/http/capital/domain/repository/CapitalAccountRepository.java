@@ -8,7 +8,6 @@ import org.springframework.stereotype.Repository;
 /**
  * Created by changming.xie on 4/2/16.
  */
-@Repository
 public class CapitalAccountRepository {
 
     @Autowired
