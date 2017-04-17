@@ -34,8 +34,8 @@
           class="org.springframework.remoting.support.SimpleHttpServerFactoryBean">
         <property name="contexts">
             <util:map>
-                <entry key="/remoting/CapitalTradeOrderService" value-ref="redPacketAccountServiceExporter"/>
-                <entry key="/remoting/RedPacketAccountService" value-ref="redPacketTradeOrderServiceExporter"/>
+                <entry key="/remoting/RedPacketTradeOrderService" value-ref="redPacketTradeOrderServiceExporter"/>
+                <entry key="/remoting/RedPacketAccountService" value-ref="redPacketAccountServiceExporter"/>
             </util:map>
         </property>
         <property name="port" value="8082"/>
