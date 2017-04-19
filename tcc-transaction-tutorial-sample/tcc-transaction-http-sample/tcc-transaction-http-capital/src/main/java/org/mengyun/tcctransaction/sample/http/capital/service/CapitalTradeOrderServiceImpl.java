@@ -2,7 +2,8 @@ package org.mengyun.tcctransaction.sample.http.capital.service;
 
 import org.apache.commons.lang3.time.DateFormatUtils;
 import org.mengyun.tcctransaction.api.Compensable;
-import org.mengyun.tcctransaction.dubbo.context.DubboTransactionContextEditor;
+import org.mengyun.tcctransaction.api.TransactionContext;
+import org.mengyun.tcctransaction.context.MethodTransactionContextEditor;
 import org.mengyun.tcctransaction.sample.http.capital.api.CapitalTradeOrderService;
 import org.mengyun.tcctransaction.sample.http.capital.api.dto.CapitalTradeOrderDto;
 import org.mengyun.tcctransaction.sample.http.capital.domain.entity.CapitalAccount;
@@ -10,7 +11,6 @@ import org.mengyun.tcctransaction.sample.http.capital.domain.entity.TradeOrder;
 import org.mengyun.tcctransaction.sample.http.capital.domain.repository.CapitalAccountRepository;
 import org.mengyun.tcctransaction.sample.http.capital.domain.repository.TradeOrderRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Calendar;
@@ -27,9 +27,9 @@ public class CapitalTradeOrderServiceImpl implements CapitalTradeOrderService {
     TradeOrderRepository tradeOrderRepository;
 
     @Override
-    @Compensable(confirmMethod = "confirmRecord", cancelMethod = "cancelRecord", transactionContextEditor = DubboTransactionContextEditor.class)
+    @Compensable(confirmMethod = "confirmRecord", cancelMethod = "cancelRecord", transactionContextEditor = MethodTransactionContextEditor.class)
     @Transactional
-    public String record(CapitalTradeOrderDto tradeOrderDto) {
+    public String record(TransactionContext transactionContext, CapitalTradeOrderDto tradeOrderDto) {
         System.out.println("capital try record called. time seq:" + DateFormatUtils.format(Calendar.getInstance(), "yyyy-MM-dd HH:mm:ss"));
         try {
             Thread.sleep(1000l);
@@ -55,7 +55,7 @@ public class CapitalTradeOrderServiceImpl implements CapitalTradeOrderService {
     }
 
     @Transactional
-    public void confirmRecord(CapitalTradeOrderDto tradeOrderDto) {
+    public void confirmRecord(TransactionContext transactionContext, CapitalTradeOrderDto tradeOrderDto) {
         System.out.println("capital confirm record called. time seq:" + DateFormatUtils.format(Calendar.getInstance(), "yyyy-MM-dd HH:mm:ss"));
         try {
             Thread.sleep(1000l);
@@ -78,7 +78,7 @@ public class CapitalTradeOrderServiceImpl implements CapitalTradeOrderService {
     }
 
     @Transactional
-    public void cancelRecord(CapitalTradeOrderDto tradeOrderDto) {
+    public void cancelRecord(TransactionContext transactionContext, CapitalTradeOrderDto tradeOrderDto) {
         System.out.println("capital cancel record called. time seq:" + DateFormatUtils.format(Calendar.getInstance(), "yyyy-MM-dd HH:mm:ss"));
         try {
             Thread.sleep(1000l);

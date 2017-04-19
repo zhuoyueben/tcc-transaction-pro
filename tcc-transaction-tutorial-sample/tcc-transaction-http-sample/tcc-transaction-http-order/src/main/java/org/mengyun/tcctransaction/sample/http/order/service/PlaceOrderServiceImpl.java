@@ -8,6 +8,7 @@ import org.mengyun.tcctransaction.sample.http.order.domain.entity.Shop;
 import org.mengyun.tcctransaction.sample.http.order.domain.repository.ShopRepository;
 import org.mengyun.tcctransaction.sample.http.order.domain.service.OrderServiceImpl;
 import org.mengyun.tcctransaction.sample.http.order.domain.service.PaymentServiceImpl;
+import org.springframework.aop.framework.ProxyFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -37,7 +38,6 @@ public class PlaceOrderServiceImpl {
         Boolean result = false;
 
         try {
-
             paymentService.makePayment(order, redPacketPayAmount, order.getTotalAmount().subtract(redPacketPayAmount));
 
         } catch (ConfirmingException confirmingException) {

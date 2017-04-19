@@ -7,7 +7,7 @@
     <groupId>org.mengyun</groupId>
     <artifactId>tcc-transaction</artifactId>
     <packaging>pom</packaging>
-    <version>1.2.1</version>
+    <version>1.2.2</version>
     <modules>
         <module>tcc-transaction-core</module>
         <module>tcc-transaction-api</module>
@@ -25,9 +25,9 @@
         <java.target.version>1.6</java.target.version>
         <project.encoding>UTF-8</project.encoding>
 
-        <repo.internal.snapshots.url>http://artifactory.ximalaya.com/artifactory/ximalaya-snapshots
+        <repo.internal.snapshots.url>http://repo1.maven.org/maven2
         </repo.internal.snapshots.url>
-        <repo.internal.releases.url>http://artifactory.ximalaya.com/artifactory/repo
+        <repo.internal.releases.url>http://repo1.maven.org/maven2
         </repo.internal.releases.url>
         <repo.proxy.url>http://repo1.maven.org/maven2</repo.proxy.url>
 
@@ -201,12 +201,6 @@
                 <groupId>aopalliance</groupId>
                 <artifactId>aopalliance</artifactId>
                 <version>1.0</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.apache.httpcomponents</groupId>
-                <artifactId>httpclient</artifactId>
-                <version>4.5.3</version>
             </dependency>
 
             <dependency>

@@ -2,7 +2,8 @@ package org.mengyun.tcctransaction.sample.http.redpacket.service;
 
 import org.apache.commons.lang3.time.DateFormatUtils;
 import org.mengyun.tcctransaction.api.Compensable;
-import org.mengyun.tcctransaction.dubbo.context.DubboTransactionContextEditor;
+import org.mengyun.tcctransaction.api.TransactionContext;
+import org.mengyun.tcctransaction.context.MethodTransactionContextEditor;
 import org.mengyun.tcctransaction.sample.http.redpacket.api.RedPacketTradeOrderService;
 import org.mengyun.tcctransaction.sample.http.redpacket.api.dto.RedPacketTradeOrderDto;
 import org.mengyun.tcctransaction.sample.http.redpacket.domain.entity.RedPacketAccount;
@@ -10,7 +11,6 @@ import org.mengyun.tcctransaction.sample.http.redpacket.domain.entity.TradeOrder
 import org.mengyun.tcctransaction.sample.http.redpacket.domain.repository.RedPacketAccountRepository;
 import org.mengyun.tcctransaction.sample.http.redpacket.domain.repository.TradeOrderRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Calendar;
@@ -27,9 +27,9 @@ public class RedPacketTradeOrderServiceImpl implements RedPacketTradeOrderServic
     TradeOrderRepository tradeOrderRepository;
 
     @Override
-    @Compensable(confirmMethod = "confirmRecord", cancelMethod = "cancelRecord", transactionContextEditor = DubboTransactionContextEditor.class)
+    @Compensable(confirmMethod = "confirmRecord", cancelMethod = "cancelRecord", transactionContextEditor = MethodTransactionContextEditor.class)
     @Transactional
-    public String record(RedPacketTradeOrderDto tradeOrderDto) {
+    public String record(TransactionContext transactionContext, RedPacketTradeOrderDto tradeOrderDto) {
         System.out.println("red packet try record called. time seq:" + DateFormatUtils.format(Calendar.getInstance(), "yyyy-MM-dd HH:mm:ss"));
 
         try {
@@ -57,7 +57,7 @@ public class RedPacketTradeOrderServiceImpl implements RedPacketTradeOrderServic
     }
 
     @Transactional
-    public void confirmRecord(RedPacketTradeOrderDto tradeOrderDto) {
+    public void confirmRecord(TransactionContext transactionContext, RedPacketTradeOrderDto tradeOrderDto) {
         System.out.println("red packet confirm record called. time seq:" + DateFormatUtils.format(Calendar.getInstance(), "yyyy-MM-dd HH:mm:ss"));
 
         try {
@@ -81,7 +81,7 @@ public class RedPacketTradeOrderServiceImpl implements RedPacketTradeOrderServic
     }
 
     @Transactional
-    public void cancelRecord(RedPacketTradeOrderDto tradeOrderDto) {
+    public void cancelRecord(TransactionContext transactionContext, RedPacketTradeOrderDto tradeOrderDto) {
         System.out.println("red packet cancel record called. time seq:" + DateFormatUtils.format(Calendar.getInstance(), "yyyy-MM-dd HH:mm:ss"));
 
         try {

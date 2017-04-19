@@ -2,11 +2,10 @@ package org.mengyun.tcctransaction.sample.http.order.domain.service;
 
 import org.apache.commons.lang3.time.DateFormatUtils;
 import org.mengyun.tcctransaction.api.Compensable;
-import org.mengyun.tcctransaction.sample.http.capital.api.CapitalTradeOrderService;
 import org.mengyun.tcctransaction.sample.http.capital.api.dto.CapitalTradeOrderDto;
 import org.mengyun.tcctransaction.sample.http.order.domain.entity.Order;
 import org.mengyun.tcctransaction.sample.http.order.domain.repository.OrderRepository;
-import org.mengyun.tcctransaction.sample.http.redpacket.api.RedPacketTradeOrderService;
+import org.mengyun.tcctransaction.sample.http.order.infrastructure.serviceproxy.TradeOrderServiceProxy;
 import org.mengyun.tcctransaction.sample.http.redpacket.api.dto.RedPacketTradeOrderDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -22,10 +21,7 @@ import java.util.Calendar;
 public class PaymentServiceImpl {
 
     @Autowired
-    CapitalTradeOrderService capitalTradeOrderService;
-
-    @Autowired
-    RedPacketTradeOrderService redPacketTradeOrderService;
+    TradeOrderServiceProxy tradeOrderServiceProxy;
 
     @Autowired
     OrderRepository orderRepository;
@@ -44,8 +40,8 @@ public class PaymentServiceImpl {
         order.pay(redPacketPayAmount, capitalPayAmount);
         orderRepository.updateOrder(order);
 
-        String result = capitalTradeOrderService.record(buildCapitalTradeOrderDto(order));
-        String result2 = redPacketTradeOrderService.record(buildRedPacketTradeOrderDto(order));
+        String result = tradeOrderServiceProxy.record(null, buildCapitalTradeOrderDto(order));
+        String result2 = tradeOrderServiceProxy.record(null, buildRedPacketTradeOrderDto(order));
     }
 
     public void confirmMakePayment(Order order, BigDecimal redPacketPayAmount, BigDecimal capitalPayAmount) {

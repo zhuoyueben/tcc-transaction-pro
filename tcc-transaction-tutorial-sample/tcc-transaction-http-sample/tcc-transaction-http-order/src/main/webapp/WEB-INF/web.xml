@@ -3,11 +3,11 @@
         "http://java.sun.com/dtd/web-app_2_3.dtd" >
 
 <web-app>
-    <display-name>Sample Dubbo Order</display-name>
+    <display-name>Sample Http Order</display-name>
 
     <context-param>
         <param-name>contextConfigLocation</param-name>
-        <param-value>classpath*:config/spring/local/appcontext-*.xml,classpath:tcc-transaction.xml,classpath:tcc-transaction-dubbo.xml
+        <param-value>classpath*:config/spring/local/appcontext-*.xml,classpath:tcc-transaction.xml
         </param-value>
     </context-param>
 

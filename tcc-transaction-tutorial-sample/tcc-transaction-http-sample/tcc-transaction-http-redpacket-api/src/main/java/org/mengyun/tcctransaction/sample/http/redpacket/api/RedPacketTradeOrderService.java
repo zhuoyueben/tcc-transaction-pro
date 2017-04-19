@@ -1,6 +1,6 @@
 package org.mengyun.tcctransaction.sample.http.redpacket.api;
 
-import org.mengyun.tcctransaction.api.Compensable;
+import org.mengyun.tcctransaction.api.TransactionContext;
 import org.mengyun.tcctransaction.sample.http.redpacket.api.dto.RedPacketTradeOrderDto;
 
 /**
@@ -8,6 +8,5 @@ import org.mengyun.tcctransaction.sample.http.redpacket.api.dto.RedPacketTradeOr
  */
 public interface RedPacketTradeOrderService {
 
-    @Compensable
-    public String record(RedPacketTradeOrderDto tradeOrderDto);
+    public String record(TransactionContext transactionContext, RedPacketTradeOrderDto tradeOrderDto);
 }
