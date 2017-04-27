@@ -79,14 +79,16 @@ public class CompensableTransactionInterceptor {
             try {
                 returnValue = pjp.proceed();
             } catch (Throwable tryingException) {
+
                 if (tryingException instanceof OptimisticLockException
                         || ExceptionUtils.getRootCause(tryingException) instanceof OptimisticLockException
                         || tryingException instanceof DelayCancelException
                         || ExceptionUtils.getRootCause(tryingException) instanceof DelayCancelException
                         ) {
+
                 } else if (isDelayException(tryingException)) {
                     logger.error("Delay Cancel Exception happened.", tryingException);
-                    throw new DelayCancelException();
+                    throw new DelayCancelException(tryingException.getMessage());
                 } else {
                     logger.warn(String.format("compensable transaction trying failed. transaction content:%s", JSON.toJSONString(transaction)), tryingException);
 
@@ -141,7 +143,7 @@ public class CompensableTransactionInterceptor {
                     ) {
             } else if (isDelayException(e)) {
                 logger.error("Delay Cancel Exception happened.", e);
-                throw new DelayCancelException();
+                throw new DelayCancelException(e.getMessage());
             }
         } finally {
             transactionManager.cleanAfterCompletion(transaction);

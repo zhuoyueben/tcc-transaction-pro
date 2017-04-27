@@ -26,6 +26,7 @@ public class PaymentServiceImpl {
     @Autowired
     OrderRepository orderRepository;
 
+
     @Compensable(confirmMethod = "confirmMakePayment", cancelMethod = "cancelMakePayment")
     @Transactional
     public void makePayment(Order order, BigDecimal redPacketPayAmount, BigDecimal capitalPayAmount) {

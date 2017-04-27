@@ -1,6 +1,7 @@
 package org.mengyun.tcctransaction.sample.http.order.service;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.log4j.Logger;
 import org.mengyun.tcctransaction.CancellingException;
 import org.mengyun.tcctransaction.ConfirmingException;
 import org.mengyun.tcctransaction.sample.http.order.domain.entity.Order;
@@ -8,7 +9,6 @@ import org.mengyun.tcctransaction.sample.http.order.domain.entity.Shop;
 import org.mengyun.tcctransaction.sample.http.order.domain.repository.ShopRepository;
 import org.mengyun.tcctransaction.sample.http.order.domain.service.OrderServiceImpl;
 import org.mengyun.tcctransaction.sample.http.order.domain.service.PaymentServiceImpl;
-import org.springframework.aop.framework.ProxyFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +21,9 @@ import java.util.List;
 @Service
 public class PlaceOrderServiceImpl {
 
+
+    static final Logger logger = Logger.getLogger(PlaceOrderServiceImpl.class.getSimpleName());
+
     @Autowired
     ShopRepository shopRepository;
 
@@ -29,6 +32,7 @@ public class PlaceOrderServiceImpl {
 
     @Autowired
     PaymentServiceImpl paymentService;
+
 
     public String placeOrder(long payerUserId, long shopId, List<Pair<Long, Integer>> productQuantities, BigDecimal redPacketPayAmount) {
         Shop shop = shopRepository.findById(shopId);
@@ -53,6 +57,7 @@ public class PlaceOrderServiceImpl {
         } catch (Throwable e) {
             //other exceptions throws at TRYING stage.
             //you can retry or cancel the operation.
+            logger.error(e);
         }
 
         return order.getMerchantOrderNo();
