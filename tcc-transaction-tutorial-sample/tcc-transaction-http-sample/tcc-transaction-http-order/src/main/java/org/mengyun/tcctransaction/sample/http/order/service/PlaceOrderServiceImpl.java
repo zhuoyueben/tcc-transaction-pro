@@ -1,7 +1,6 @@
 package org.mengyun.tcctransaction.sample.http.order.service;
 
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.log4j.Logger;
 import org.mengyun.tcctransaction.CancellingException;
 import org.mengyun.tcctransaction.ConfirmingException;
 import org.mengyun.tcctransaction.sample.http.order.domain.entity.Order;
@@ -20,9 +19,6 @@ import java.util.List;
  */
 @Service
 public class PlaceOrderServiceImpl {
-
-
-    static final Logger logger = Logger.getLogger(PlaceOrderServiceImpl.class.getSimpleName());
 
     @Autowired
     ShopRepository shopRepository;
@@ -57,7 +53,7 @@ public class PlaceOrderServiceImpl {
         } catch (Throwable e) {
             //other exceptions throws at TRYING stage.
             //you can retry or cancel the operation.
-            logger.error(e);
+            e.printStackTrace();
         }
 
         return order.getMerchantOrderNo();
