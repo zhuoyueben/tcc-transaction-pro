@@ -31,7 +31,7 @@
 
     <bean id="transactionRepository"
           class="org.mengyun.tcctransaction.spring.repository.SpringJdbcTransactionRepository">
-        <property name="dataSource" ref="tccDataSource"/>
+        <property name="dataSource" ref="redPacketDataSource"/>
         <property name="domain" value="REDPACKET"/>
         <property name="tbSuffix" value="_RED"/>
     </bean>

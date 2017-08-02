@@ -31,7 +31,7 @@
 
     <bean id="transactionRepository"
           class="org.mengyun.tcctransaction.spring.repository.SpringJdbcTransactionRepository">
-        <property name="dataSource" ref="tccDataSource"/>
+        <property name="dataSource" ref="capitalDataSource"/>
         <property name="domain" value="CAPITAL"/>
         <property name="tbSuffix" value="_CAP"/>
     </bean>
