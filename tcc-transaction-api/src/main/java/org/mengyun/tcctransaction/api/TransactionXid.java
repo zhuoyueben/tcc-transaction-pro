@@ -14,10 +14,17 @@ public class TransactionXid implements Xid, Serializable {
 
     private static final long serialVersionUID = -6817267250789142043L;
 
+    /**
+     * xid 格式标识符
+     */
     private int formatId = 1;
-
+    /**
+     * 全局事务编号
+     */
     private byte[] globalTransactionId;
-
+    /**
+     * 分支事务编号
+     */
     private byte[] branchQualifier;
 
     public TransactionXid() {
@@ -114,6 +121,14 @@ public class TransactionXid implements Xid, Serializable {
         return true;
     }
 
+    /**
+     * UUID 转成 byte数组
+     * [0, 16)   mostSignificantBits
+     * [16, 32)  leastSignificantBits
+     *
+     * @param uuid UUID
+     * @return byte数组
+     */
     public static byte[] uuidToByteArray(UUID uuid) {
         ByteBuffer bb = ByteBuffer.wrap(new byte[16]);
         bb.putLong(uuid.getMostSignificantBits());

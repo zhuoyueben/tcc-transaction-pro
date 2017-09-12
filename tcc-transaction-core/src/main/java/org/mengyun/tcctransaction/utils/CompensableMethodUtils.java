@@ -14,12 +14,17 @@ import java.lang.reflect.Method;
  */
 public class CompensableMethodUtils {
 
+    /**
+     * 获得带 @Compensable 注解的方法
+     *
+     * @param pjp 切面点
+     * @return 方法
+     */
     public static Method getCompensableMethod(ProceedingJoinPoint pjp) {
-        Method method = ((MethodSignature) (pjp.getSignature())).getMethod();
-
+        Method method = ((MethodSignature) (pjp.getSignature())).getMethod(); // 代理方法对象
         if (method.getAnnotation(Compensable.class) == null) {
             try {
-                method = pjp.getTarget().getClass().getMethod(method.getName(), method.getParameterTypes());
+                method = pjp.getTarget().getClass().getMethod(method.getName(), method.getParameterTypes()); // 实际方法对象
             } catch (NoSuchMethodException e) {
                 return null;
             }
@@ -27,12 +32,21 @@ public class CompensableMethodUtils {
         return method;
     }
 
+    /**
+     * 计算方法类型
+     *
+     * @param propagation 传播级别
+     * @param isTransactionActive 是否事务开启
+     * @param transactionContext 事务上下文
+     * @return 方法类型
+     */
     public static MethodType calculateMethodType(Propagation propagation, boolean isTransactionActive, TransactionContext transactionContext) {
-
-        if ((propagation.equals(Propagation.REQUIRED) && !isTransactionActive && transactionContext == null) ||
-                propagation.equals(Propagation.REQUIRES_NEW)) {
+        if ((propagation.equals(Propagation.REQUIRED) && !isTransactionActive && transactionContext == null) // Propagation.REQUIRED：支持当前事务，当前没有事务，就新建一个事务。
+                || propagation.equals(Propagation.REQUIRES_NEW)) { // Propagation.REQUIRES_NEW：新建事务，如果当前存在事务，把当前事务挂起。
             return MethodType.ROOT;
-        } else if ((propagation.equals(Propagation.REQUIRED) || propagation.equals(Propagation.MANDATORY)) && !isTransactionActive && transactionContext != null) {
+        } else if ((propagation.equals(Propagation.REQUIRED) // Propagation.REQUIRED：支持当前事务
+                    || propagation.equals(Propagation.MANDATORY)) // Propagation.MANDATORY：支持当前事务
+                && !isTransactionActive && transactionContext != null) {
             return MethodType.PROVIDER;
         } else {
             return MethodType.NORMAL;
@@ -40,7 +54,6 @@ public class CompensableMethodUtils {
     }
 
     public static MethodType calculateMethodType(TransactionContext transactionContext, boolean isCompensable) {
-
         if (transactionContext == null && isCompensable) {
             //isRootTransactionMethod
             return MethodType.ROOT;
@@ -56,9 +69,7 @@ public class CompensableMethodUtils {
     }
 
     public static int getTransactionContextParamPosition(Class<?>[] parameterTypes) {
-
         int position = -1;
-
         for (int i = 0; i < parameterTypes.length; i++) {
             if (parameterTypes[i].equals(org.mengyun.tcctransaction.api.TransactionContext.class)) {
                 position = i;
@@ -69,16 +80,14 @@ public class CompensableMethodUtils {
     }
 
     public static TransactionContext getTransactionContextFromArgs(Object[] args) {
-
         TransactionContext transactionContext = null;
-
         for (Object arg : args) {
             if (arg != null && org.mengyun.tcctransaction.api.TransactionContext.class.isAssignableFrom(arg.getClass())) {
 
                 transactionContext = (org.mengyun.tcctransaction.api.TransactionContext) arg;
             }
         }
-
         return transactionContext;
     }
+
 }

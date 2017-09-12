@@ -6,6 +6,7 @@ import java.util.UUID;
 /**
  * Created by changming.xie on 5/31/16.
  */
+@Deprecated // added by yunai
 public class UuidUtils {
 
     public static byte[] uuidToByteArray(UUID uuid) {

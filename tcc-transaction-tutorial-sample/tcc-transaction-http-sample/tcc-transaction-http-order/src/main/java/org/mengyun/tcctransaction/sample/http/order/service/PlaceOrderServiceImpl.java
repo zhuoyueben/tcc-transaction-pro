@@ -29,7 +29,7 @@ public class PlaceOrderServiceImpl {
     @Autowired
     PaymentServiceImpl paymentService;
 
-
+// TODO 疑问：这里需要注解，@Transactional
     public String placeOrder(long payerUserId, long shopId, List<Pair<Long, Integer>> productQuantities, BigDecimal redPacketPayAmount) {
         Shop shop = shopRepository.findById(shopId);
 

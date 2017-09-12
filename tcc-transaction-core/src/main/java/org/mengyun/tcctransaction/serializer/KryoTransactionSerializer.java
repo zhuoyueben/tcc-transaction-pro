@@ -41,7 +41,6 @@ public class KryoTransactionSerializer implements ObjectSerializer<Transaction> 
     @Override
     public Transaction deserialize(byte[] bytes) {
         Input input = new Input(bytes);
-        Transaction transaction = kryo.readObject(input, Transaction.class);
-        return transaction;
+        return kryo.readObject(input, Transaction.class);
     }
 }
