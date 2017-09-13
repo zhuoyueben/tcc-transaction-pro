@@ -10,7 +10,7 @@ package org.mengyun.tcctransaction.common;
 public enum TransactionType {
 
     /**
-     * 全局事务
+     * 根事务
      */
     ROOT(1),
     /**

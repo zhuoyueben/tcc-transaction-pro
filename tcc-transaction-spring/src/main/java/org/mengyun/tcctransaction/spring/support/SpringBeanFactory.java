@@ -8,6 +8,8 @@ import org.springframework.context.ApplicationContextAware;
 import java.util.Map;
 
 /**
+ * Spring Bean 工厂
+ *
  * Created by changmingxie on 11/22/15.
  */
 public class SpringBeanFactory implements BeanFactory, ApplicationContextAware {

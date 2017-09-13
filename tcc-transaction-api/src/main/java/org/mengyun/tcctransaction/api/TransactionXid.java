@@ -8,6 +8,8 @@ import java.util.Arrays;
 import java.util.UUID;
 
 /**
+ * 事务编号
+ *
  * Created by changmingxie on 10/26/15.
  */
 public class TransactionXid implements Xid, Serializable {
@@ -42,7 +44,7 @@ public class TransactionXid implements Xid, Serializable {
 
     public TransactionXid(byte[] globalTransactionId) {
         this.globalTransactionId = globalTransactionId;
-        branchQualifier = uuidToByteArray(UUID.randomUUID());
+        branchQualifier = uuidToByteArray(UUID.randomUUID()); // 生成 分支事务编号
     }
 
     public TransactionXid(byte[] globalTransactionId, byte[] branchQualifier) {

@@ -17,7 +17,6 @@ public abstract class ResourceCoordinatorAspect {
 
     @Pointcut("@annotation(org.mengyun.tcctransaction.api.Compensable)")
     public void transactionContextCall() {
-
     }
 
     @Around("transactionContextCall()")

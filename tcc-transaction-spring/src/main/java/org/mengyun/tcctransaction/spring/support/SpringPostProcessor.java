@@ -5,9 +5,10 @@ import org.mengyun.tcctransaction.support.FactoryBuilder;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
-import org.springframework.stereotype.Component;
 
 /**
+ * Spring 后置处理器
+ *
  * Created by changmingxie on 11/20/15.
  */
 public class SpringPostProcessor implements ApplicationListener<ContextRefreshedEvent> {
@@ -15,7 +16,7 @@ public class SpringPostProcessor implements ApplicationListener<ContextRefreshed
     @Override
     public void onApplicationEvent(ContextRefreshedEvent contextRefreshedEvent) {
         ApplicationContext applicationContext = contextRefreshedEvent.getApplicationContext();
-
+        // 注册到工厂 Builder
         if (applicationContext.getParent() == null) {
             FactoryBuilder.registerBeanFactory(applicationContext.getBean(BeanFactory.class));
         }

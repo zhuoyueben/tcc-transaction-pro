@@ -45,37 +45,27 @@ public class ReflectionUtils {
     }
 
     public static Class getDeclaringType(Class aClass, String methodName, Class<?>[] parameterTypes) {
-
-        Method method = null;
-
-
+        Method method;
         Class findClass = aClass;
-
         do {
             Class[] clazzes = findClass.getInterfaces();
-
             for (Class clazz : clazzes) {
-
                 try {
                     method = clazz.getDeclaredMethod(methodName, parameterTypes);
                 } catch (NoSuchMethodException e) {
                     method = null;
                 }
-
                 if (method != null) {
                     return clazz;
                 }
             }
-
             findClass = findClass.getSuperclass();
-
         } while (!findClass.equals(Object.class));
-
         return aClass;
     }
 
     public static Object getNullValue(Class type) {
-
+        // 处理基本类型
         if (boolean.class.equals(type)) {
             return false;
         } else if (byte.class.equals(type)) {
@@ -91,7 +81,7 @@ public class ReflectionUtils {
         } else if (double.class.equals(type)) {
             return 0;
         }
-
+        // 处理对象
         return null;
     }
 }

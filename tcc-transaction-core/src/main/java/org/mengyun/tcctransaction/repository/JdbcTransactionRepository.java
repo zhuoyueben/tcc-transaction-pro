@@ -3,6 +3,7 @@ package org.mengyun.tcctransaction.repository;
 
 import org.mengyun.tcctransaction.Transaction;
 import org.mengyun.tcctransaction.api.TransactionStatus;
+import org.mengyun.tcctransaction.api.UuidUtils;
 import org.mengyun.tcctransaction.serializer.JdkSerializationSerializer;
 import org.mengyun.tcctransaction.serializer.ObjectSerializer;
 import org.mengyun.tcctransaction.utils.CollectionUtils;
@@ -84,6 +85,9 @@ public class JdbcTransactionRepository extends CachableTransactionRepository {
             if (StringUtils.isNotEmpty(domain)) {
                 stmt.setString(10, domain);
             }
+
+            System.out.println(UuidUtils.byteArrayToUUID(transaction.getXid().getGlobalTransactionId()));
+            System.out.println(UuidUtils.byteArrayToUUID(transaction.getXid().getBranchQualifier()));
 
             return stmt.executeUpdate();
 
