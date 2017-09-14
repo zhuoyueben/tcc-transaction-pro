@@ -1,6 +1,8 @@
 package org.mengyun.tcctransaction.serializer;
 
 /**
+ * 对象序列化接口
+ *
  * Created by changming.xie on 7/22/16.
  */
 public interface ObjectSerializer<T> {

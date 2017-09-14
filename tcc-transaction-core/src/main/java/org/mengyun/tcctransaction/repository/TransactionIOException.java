@@ -1,6 +1,8 @@
 package org.mengyun.tcctransaction.repository;
 
 /**
+ * Transaction IO 异常
+ *
  * Created by hongyuan.wang on 2016/1/26.
  */
 public class TransactionIOException extends RuntimeException {

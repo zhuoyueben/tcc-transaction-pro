@@ -12,6 +12,8 @@ import org.mengyun.tcctransaction.api.TransactionXid;
 import org.mengyun.tcctransaction.common.TransactionType;
 
 /**
+ * Kyro 序列化实现
+ *
  * Created by changming.xie on 7/22/16.
  */
 public class KryoTransactionSerializer implements ObjectSerializer<Transaction> {
@@ -29,8 +31,7 @@ public class KryoTransactionSerializer implements ObjectSerializer<Transaction> 
         kryo.register(Terminator.class);
         kryo.register(InvocationContext.class);
     }
-
-
+    
     @Override
     public byte[] serialize(Transaction transaction) {
         Output output = new Output(256, -1);

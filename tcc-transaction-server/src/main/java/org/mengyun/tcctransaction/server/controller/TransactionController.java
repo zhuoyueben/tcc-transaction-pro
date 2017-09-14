@@ -23,16 +23,16 @@ import java.util.List;
 @Controller
 public class TransactionController {
 
+    public static final Integer DEFAULT_PAGE_NUM = 1;
+
+    public static final int DEFAULT_PAGE_SIZE = 10;
+
     @Autowired
     @Qualifier("jdbcTransactionDao")
     private TransactionDao transactionDao;
 
     @Value("${tcc_domain}")
     private String tccDomain;
-
-    public static final Integer DEFAULT_PAGE_NUM = 1;
-
-    public static final int DEFAULT_PAGE_SIZE = 10;
 
     @RequestMapping(value = "/management", method = RequestMethod.GET)
     public ModelAndView manager() {

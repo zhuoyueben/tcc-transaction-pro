@@ -69,11 +69,9 @@ public class TransactionXid implements Xid, Serializable {
 
     @Override
     public String toString() {
-
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("globalTransactionId:").append(UUID.nameUUIDFromBytes(globalTransactionId).toString());
         stringBuilder.append(",").append("branchQualifier:").append(UUID.nameUUIDFromBytes(branchQualifier).toString());
-
         return stringBuilder.toString();
     }
 

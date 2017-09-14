@@ -3,7 +3,6 @@ package org.mengyun.tcctransaction.repository;
 
 import org.mengyun.tcctransaction.Transaction;
 import org.mengyun.tcctransaction.api.TransactionStatus;
-import org.mengyun.tcctransaction.api.UuidUtils;
 import org.mengyun.tcctransaction.serializer.JdkSerializationSerializer;
 import org.mengyun.tcctransaction.serializer.ObjectSerializer;
 import org.mengyun.tcctransaction.utils.CollectionUtils;
@@ -13,20 +12,31 @@ import javax.sql.DataSource;
 import javax.transaction.xa.Xid;
 import java.sql.*;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
+ * JDBC 事务存储器
+ * <p>
  * Created by changmingxie on 10/30/15.
  */
 public class JdbcTransactionRepository extends CachableTransactionRepository {
 
+    /**
+     * 领域
+     */
     private String domain;
-
+    /**
+     * 表后缀
+     */
     private String tbSuffix;
-
+    /**
+     * 数据源
+     */
     private DataSource dataSource;
-
+    /**
+     * 序列化
+     */
     private ObjectSerializer serializer = new JdkSerializationSerializer();
 
     public String getDomain() {
@@ -57,40 +67,79 @@ public class JdbcTransactionRepository extends CachableTransactionRepository {
         return dataSource;
     }
 
-    protected int doCreate(Transaction transaction) {
+    private String getTableName() {
+        return StringUtils.isNotEmpty(tbSuffix) ? "TCC_TRANSACTION" + tbSuffix : "TCC_TRANSACTION";
+    }
 
+    /**
+     * 获取 Connection
+     *
+     * @return 连接
+     */
+    protected Connection getConnection() {
+        try {
+            return this.dataSource.getConnection();
+        } catch (SQLException e) {
+            throw new TransactionIOException(e);
+        }
+    }
+
+    /**
+     * 释放 Connection
+     *
+     * @param con 连接
+     */
+    protected void releaseConnection(Connection con) {
+        try {
+            if (con != null && !con.isClosed()) {
+                con.close();
+            }
+        } catch (SQLException e) {
+            throw new TransactionIOException(e);
+        }
+    }
+
+    /**
+     * 释放 Statement
+     *
+     * @param stmt stmt
+     */
+    private void closeStatement(Statement stmt) {
+        try {
+            if (stmt != null && !stmt.isClosed()) {
+                stmt.close();
+            }
+        } catch (Exception ex) {
+            throw new TransactionIOException(ex);
+        }
+    }
+
+    @Override
+    protected int doCreate(Transaction transaction) {
         Connection connection = null;
         PreparedStatement stmt = null;
-
         try {
             connection = this.getConnection();
-
+            // SQL
             StringBuilder builder = new StringBuilder();
             builder.append("INSERT INTO " + getTableName() +
                     "(GLOBAL_TX_ID,BRANCH_QUALIFIER,TRANSACTION_TYPE,CONTENT,STATUS,RETRIED_COUNT,CREATE_TIME,LAST_UPDATE_TIME,VERSION");
             builder.append(StringUtils.isNotEmpty(domain) ? ",DOMAIN ) VALUES (?,?,?,?,?,?,?,?,?,?)" : ") VALUES (?,?,?,?,?,?,?,?,?)");
-
             stmt = connection.prepareStatement(builder.toString());
-
             stmt.setBytes(1, transaction.getXid().getGlobalTransactionId());
             stmt.setBytes(2, transaction.getXid().getBranchQualifier());
             stmt.setInt(3, transaction.getTransactionType().getId());
-            stmt.setBytes(4, serializer.serialize(transaction));
+            stmt.setBytes(4, serializer.serialize(transaction)); // 序列化
             stmt.setInt(5, transaction.getStatus().getId());
             stmt.setInt(6, transaction.getRetriedCount());
             stmt.setTimestamp(7, new java.sql.Timestamp(transaction.getCreateTime().getTime()));
             stmt.setTimestamp(8, new java.sql.Timestamp(transaction.getLastUpdateTime().getTime()));
             stmt.setLong(9, transaction.getVersion());
-
             if (StringUtils.isNotEmpty(domain)) {
                 stmt.setString(10, domain);
             }
-
-            System.out.println(UuidUtils.byteArrayToUUID(transaction.getXid().getGlobalTransactionId()));
-            System.out.println(UuidUtils.byteArrayToUUID(transaction.getXid().getBranchQualifier()));
-
+            // 执行
             return stmt.executeUpdate();
-
         } catch (SQLException e) {
             throw new TransactionIOException(e);
         } finally {
@@ -99,44 +148,35 @@ public class JdbcTransactionRepository extends CachableTransactionRepository {
         }
     }
 
+    @Override
     protected int doUpdate(Transaction transaction) {
         Connection connection = null;
         PreparedStatement stmt = null;
-
         java.util.Date lastUpdateTime = transaction.getLastUpdateTime();
         long currentVersion = transaction.getVersion();
-
+        // 设置最后更新时间 和 最新版本号
         transaction.updateTime();
         transaction.updateVersion();
-
         try {
             connection = this.getConnection();
-
+            // SQL
             StringBuilder builder = new StringBuilder();
             builder.append("UPDATE " + getTableName() + " SET " +
                     "CONTENT = ?,STATUS = ?,LAST_UPDATE_TIME = ?, RETRIED_COUNT = ?,VERSION = VERSION+1 WHERE GLOBAL_TX_ID = ? AND BRANCH_QUALIFIER = ? AND VERSION = ?");
-
             builder.append(StringUtils.isNotEmpty(domain) ? " AND DOMAIN = ?" : "");
-
             stmt = connection.prepareStatement(builder.toString());
-
-            stmt.setBytes(1, serializer.serialize(transaction));
+            stmt.setBytes(1, serializer.serialize(transaction)); // 序列化
             stmt.setInt(2, transaction.getStatus().getId());
             stmt.setTimestamp(3, new Timestamp(transaction.getLastUpdateTime().getTime()));
-
             stmt.setInt(4, transaction.getRetriedCount());
             stmt.setBytes(5, transaction.getXid().getGlobalTransactionId());
             stmt.setBytes(6, transaction.getXid().getBranchQualifier());
             stmt.setLong(7, currentVersion);
-
             if (StringUtils.isNotEmpty(domain)) {
                 stmt.setString(8, domain);
             }
-
-            int result = stmt.executeUpdate();
-
-            return result;
-
+            // 执行
+            return stmt.executeUpdate();
         } catch (Throwable e) {
             transaction.setLastUpdateTime(lastUpdateTime);
             transaction.setVersion(currentVersion);
@@ -147,30 +187,25 @@ public class JdbcTransactionRepository extends CachableTransactionRepository {
         }
     }
 
+    @Override
     protected int doDelete(Transaction transaction) {
         Connection connection = null;
         PreparedStatement stmt = null;
-
         try {
             connection = this.getConnection();
-
+            // SQL
             StringBuilder builder = new StringBuilder();
             builder.append("DELETE FROM " + getTableName() +
                     " WHERE GLOBAL_TX_ID = ? AND BRANCH_QUALIFIER = ?");
-
             builder.append(StringUtils.isNotEmpty(domain) ? " AND DOMAIN = ?" : "");
-
             stmt = connection.prepareStatement(builder.toString());
-
             stmt.setBytes(1, transaction.getXid().getGlobalTransactionId());
             stmt.setBytes(2, transaction.getXid().getBranchQualifier());
-
             if (StringUtils.isNotEmpty(domain)) {
                 stmt.setString(3, domain);
             }
-
+            // 执行
             return stmt.executeUpdate();
-
         } catch (SQLException e) {
             throw new TransactionIOException(e);
         } finally {
@@ -179,10 +214,9 @@ public class JdbcTransactionRepository extends CachableTransactionRepository {
         }
     }
 
+    @Override
     protected Transaction doFindOne(Xid xid) {
-
-        List<Transaction> transactions = doFind(Arrays.asList(xid));
-
+        List<Transaction> transactions = doFind(Collections.singletonList(xid));
         if (!CollectionUtils.isEmpty(transactions)) {
             return transactions.get(0);
         }
@@ -191,32 +225,25 @@ public class JdbcTransactionRepository extends CachableTransactionRepository {
 
     @Override
     protected List<Transaction> doFindAllUnmodifiedSince(java.util.Date date) {
-
         List<Transaction> transactions = new ArrayList<Transaction>();
-
         Connection connection = null;
         PreparedStatement stmt = null;
-
         try {
             connection = this.getConnection();
-
+            // SQL
             StringBuilder builder = new StringBuilder();
-
             builder.append("SELECT GLOBAL_TX_ID, BRANCH_QUALIFIER, CONTENT,STATUS,TRANSACTION_TYPE,CREATE_TIME,LAST_UPDATE_TIME,RETRIED_COUNT,VERSION");
             builder.append(StringUtils.isNotEmpty(domain) ? ",DOMAIN" : "");
-            builder.append("  FROM " + getTableName() + " WHERE LAST_UPDATE_TIME < ?");
+            builder.append("  FROM " + getTableName() + " WHERE LAST_UPDATE_TIME < ?"); // 最后更新时间
             builder.append(StringUtils.isNotEmpty(domain) ? " AND DOMAIN = ?" : "");
-
             stmt = connection.prepareStatement(builder.toString());
-
             stmt.setTimestamp(1, new Timestamp(date.getTime()));
-
             if (StringUtils.isNotEmpty(domain)) {
                 stmt.setString(2, domain);
             }
-
+            // 执行
             ResultSet resultSet = stmt.executeQuery();
-
+            // 创建 Transaction
             this.constructTransactions(resultSet, transactions);
         } catch (Throwable e) {
             throw new TransactionIOException(e);
@@ -229,49 +256,38 @@ public class JdbcTransactionRepository extends CachableTransactionRepository {
     }
 
     protected List<Transaction> doFind(List<Xid> xids) {
-
         List<Transaction> transactions = new ArrayList<Transaction>();
-
         if (CollectionUtils.isEmpty(xids)) {
             return transactions;
         }
-
         Connection connection = null;
         PreparedStatement stmt = null;
-
         try {
             connection = this.getConnection();
-
+            // SQL
             StringBuilder builder = new StringBuilder();
             builder.append("SELECT GLOBAL_TX_ID, BRANCH_QUALIFIER, CONTENT,STATUS,TRANSACTION_TYPE,CREATE_TIME,LAST_UPDATE_TIME,RETRIED_COUNT,VERSION");
             builder.append(StringUtils.isNotEmpty(domain) ? ",DOMAIN" : "");
             builder.append("  FROM " + getTableName() + " WHERE");
-
             if (!CollectionUtils.isEmpty(xids)) {
                 for (Xid xid : xids) {
-                    builder.append(" ( GLOBAL_TX_ID = ? AND BRANCH_QUALIFIER = ? ) OR");
+                    builder.append(" ( GLOBAL_TX_ID = ? AND BRANCH_QUALIFIER = ? ) OR"); // 通过 or 拼接多个 GLOBAL_TX_ID + BRANCH_QUALIFIER 组合
                 }
-
                 builder.delete(builder.length() - 2, builder.length());
             }
-
             builder.append(StringUtils.isNotEmpty(domain) ? " AND DOMAIN = ?" : "");
-
             stmt = connection.prepareStatement(builder.toString());
-
             int i = 0;
-
             for (Xid xid : xids) {
                 stmt.setBytes(++i, xid.getGlobalTransactionId());
                 stmt.setBytes(++i, xid.getBranchQualifier());
             }
-
             if (StringUtils.isNotEmpty(domain)) {
                 stmt.setString(++i, domain);
             }
-
+            // 执行
             ResultSet resultSet = stmt.executeQuery();
-
+            // 创建 Transaction
             this.constructTransactions(resultSet, transactions);
         } catch (Throwable e) {
             throw new TransactionIOException(e);
@@ -283,6 +299,13 @@ public class JdbcTransactionRepository extends CachableTransactionRepository {
         return transactions;
     }
 
+    /**
+     * 创建 Transaction 集合
+     *
+     * @param resultSet 结果皆
+     * @param transactions 事务集合
+     * @throws SQLException 当 SQL 发生异常时
+     */
     protected void constructTransactions(ResultSet resultSet, List<Transaction> transactions) throws SQLException {
         while (resultSet.next()) {
             byte[] transactionBytes = resultSet.getBytes(3);
@@ -296,35 +319,4 @@ public class JdbcTransactionRepository extends CachableTransactionRepository {
     }
 
 
-    protected Connection getConnection() {
-        try {
-            return this.dataSource.getConnection();
-        } catch (SQLException e) {
-            throw new TransactionIOException(e);
-        }
-    }
-
-    protected void releaseConnection(Connection con) {
-        try {
-            if (con != null && !con.isClosed()) {
-                con.close();
-            }
-        } catch (SQLException e) {
-            throw new TransactionIOException(e);
-        }
-    }
-
-    private void closeStatement(Statement stmt) {
-        try {
-            if (stmt != null && !stmt.isClosed()) {
-                stmt.close();
-            }
-        } catch (Exception ex) {
-            throw new TransactionIOException(ex);
-        }
-    }
-
-    private String getTableName() {
-        return StringUtils.isNotEmpty(tbSuffix) ? "TCC_TRANSACTION" + tbSuffix : "TCC_TRANSACTION";
-    }
 }

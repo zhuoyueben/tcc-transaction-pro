@@ -3,16 +3,18 @@ package org.mengyun.tcctransaction.serializer;
 import java.io.*;
 
 /**
+ * JDK 序列化实现
+ *
  * Created by changming.xie on 7/22/16.
  */
 public class JdkSerializationSerializer<T> implements ObjectSerializer<T> {
+
     @Override
     public byte[] serialize(T object) {
         if (object == null) {
             return null;
         } else {
             ByteArrayOutputStream baos = new ByteArrayOutputStream(1024);
-
             try {
                 ObjectOutputStream ex = new ObjectOutputStream(baos);
                 ex.writeObject(object);
@@ -20,7 +22,6 @@ public class JdkSerializationSerializer<T> implements ObjectSerializer<T> {
             } catch (IOException var3) {
                 throw new IllegalArgumentException("Failed to serialize object of type: " + object.getClass(), var3);
             }
-
             return baos.toByteArray();
         }
     }
@@ -40,4 +41,5 @@ public class JdkSerializationSerializer<T> implements ObjectSerializer<T> {
             }
         }
     }
+
 }
