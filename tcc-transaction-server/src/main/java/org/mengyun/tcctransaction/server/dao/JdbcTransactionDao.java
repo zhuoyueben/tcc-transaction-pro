@@ -1,7 +1,6 @@
 package org.mengyun.tcctransaction.server.dao;
 
 
-import org.mengyun.tcctransaction.server.vo.PageVo;
 import org.mengyun.tcctransaction.server.vo.TransactionVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,16 +18,21 @@ import java.util.List;
 import java.util.Properties;
 
 /**
+ * JDBC 事务DAO
+ *
  * Created by cheng.zeng on 2016/9/2.
  */
 @Repository("jdbcTransactionDao")
 public class JdbcTransactionDao implements TransactionDao {
 
+    private static final String TABLE_NAME_PREFIX = "TCC_TRANSACTION";
+
     @Autowired
     private DataSource dataSource;
 
-    private static final String TABLE_NAME_PREFIX = "TCC_TRANSACTION";
-
+    /**
+     * 读取 jdbc-domain-suffix.properties
+     */
     @Value("#{jdbcDomainSuffix}")
     private Properties domainSuffix;
 
@@ -41,6 +45,7 @@ public class JdbcTransactionDao implements TransactionDao {
         List<TransactionVo> transactionVos = new ArrayList<TransactionVo>();
         PreparedStatement preparedStatement = null;
         try {
+            // SQL
             String tableName = TABLE_NAME_PREFIX + domainSuffix.getProperty(domain);
             String sql = "select DOMAIN," +
                     "GLOBAL_TX_ID," +
@@ -49,14 +54,13 @@ public class JdbcTransactionDao implements TransactionDao {
                     "TRANSACTION_TYPE," +
                     "RETRIED_COUNT," +
                     "CREATE_TIME," +
-                    "LAST_UPDATE_TIME from " + tableName + " limit ?,?";
-
+                    "LAST_UPDATE_TIME from " + tableName + " limit ?,?"; // 不会过滤 domain 字段
             preparedStatement = connection.prepareStatement(sql);
             preparedStatement.setInt(1, (pageNum - 1) * pageSize);
             preparedStatement.setInt(2, pageSize);
-
+            // 执行
             ResultSet resultSet = preparedStatement.executeQuery();
-
+            // 解析结果
             while (resultSet.next()) {
                 TransactionVo transactionVo = new TransactionVo();
                 transactionVo.setDomain(resultSet.getString(1));
@@ -84,16 +88,16 @@ public class JdbcTransactionDao implements TransactionDao {
             return 0;
         }
         Connection connection = getConnection();
-        PageVo<TransactionVo> pageVo = new PageVo<TransactionVo>();
-        List<TransactionVo> transactionVos = new ArrayList<TransactionVo>();
-        pageVo.setItems(transactionVos);
+//        PageVo<TransactionVo> pageVo = new PageVo<TransactionVo>();
+//        List<TransactionVo> transactionVos = new ArrayList<TransactionVo>();
+//        pageVo.setItems(transactionVos);
         PreparedStatement preparedStatement = null;
-
         try {
+            // SQL
             String tableName = TABLE_NAME_PREFIX + domainSuffix.getProperty(domain);
-
             preparedStatement = connection.prepareStatement("select COUNT(*) as count from " + tableName);
             ResultSet resultSet = preparedStatement.executeQuery();
+            // 执行
             if (resultSet.next()) {
                 return resultSet.getInt("count");
             }
@@ -114,14 +118,15 @@ public class JdbcTransactionDao implements TransactionDao {
         Connection connection = getConnection();
         PreparedStatement preparedStatement = null;
         try {
+            // SQL
             String tableName = TABLE_NAME_PREFIX + domainSuffix.getProperty(domain);
-            ;
             String sql = "UPDATE " + tableName +
                     " SET RETRIED_COUNT=0" +
                     " WHERE GLOBAL_TX_ID = ? AND BRANCH_QUALIFIER = ?";
             preparedStatement = connection.prepareStatement(sql);
             preparedStatement.setBytes(1, globalTxId);
             preparedStatement.setBytes(2, branchQualifier);
+            // 执行
             int result = preparedStatement.executeUpdate();
             return result > 0;
         } catch (Exception e) {

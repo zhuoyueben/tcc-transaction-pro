@@ -32,7 +32,8 @@ public class CapitalTradeOrderServiceImpl implements CapitalTradeOrderService {
     public String record(TransactionContext transactionContext, CapitalTradeOrderDto tradeOrderDto) {
 
         try {
-            Thread.sleep(1000l);
+//            Thread.sleep(1000l);
+            Thread.sleep(10000000L);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }

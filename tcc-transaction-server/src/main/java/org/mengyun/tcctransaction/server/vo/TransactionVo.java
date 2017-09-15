@@ -3,24 +3,43 @@ package org.mengyun.tcctransaction.server.vo;
 import java.util.Date;
 
 /**
+ * 事务 VO
+ *
  * Created by cheng.zeng on 2016/9/2.
  */
 public class TransactionVo {
 
+    /**
+     * 领域
+     */
     private String domain;
-
+    /**
+     * 全局事务编号
+     */
     private String globalTxId;
-
+    /**
+     * 分支事务编号
+     */
     private String branchQualifier;
-
+    /**
+     * 事务状态
+     */
     private Integer status;
-
+    /**
+     * 事务类型
+     */
     private Integer transactionType;
-
+    /**
+     * 重试次数
+     */
     private Integer retriedCount;
-
+    /**
+     * 创建时间
+     */
     private Date createTime;
-
+    /**
+     * 最后更新时间
+     */
     private Date lastUpdateTime;
 
     public String getDomain() {

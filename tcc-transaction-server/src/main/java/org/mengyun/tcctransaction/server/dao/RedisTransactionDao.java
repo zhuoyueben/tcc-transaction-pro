@@ -17,49 +17,52 @@ import javax.xml.bind.DatatypeConverter;
 import java.util.*;
 
 /**
+ * Redis 事务DAO
+ *
  * Created by changming.xie on 9/7/16.
  */
 @Repository("redisTransactionDao")
 public class RedisTransactionDao implements TransactionDao {
 
+    /**
+     * redis pool
+     */
     @Autowired
     private JedisPool jedisPool;
 
+    /**
+     * 序列化
+     */
     private ObjectSerializer serializer = new JdkSerializationSerializer();
 
+    /**
+     * 读取 redis-domain-key-prefix.properties
+     */
     @Value("#{redisDomainKeyPrefix}")
     private Properties domainKeyPrefix;
 
     @Override
     public List<TransactionVo> findTransactions(final String domain, final Integer pageNum, final int pageSize) {
-
-
         return RedisHelper.execute(jedisPool, new JedisCallback<List<TransactionVo>>() {
             @Override
             public List<TransactionVo> doInJedis(Jedis jedis) {
-
                 int start = (pageNum - 1) * pageSize;
                 int end = pageNum * pageSize;
-
+                // 加载所有事务
                 ArrayList<byte[]> allKeys = new ArrayList<byte[]>(jedis.keys((domainKeyPrefix.getProperty(domain) + "*").getBytes()));
-
                 if (allKeys.size() < start) {
                     return Collections.emptyList();
                 }
-
                 if (end > allKeys.size()) {
                     end = allKeys.size();
                 }
-
+                // 分页
                 List<byte[]> keys = allKeys.subList(start, end);
-
+                // 解析结果
                 List<TransactionVo> transactionVos = new ArrayList<TransactionVo>();
-
                 for (byte[] key : keys) {
-
                     byte[] content = RedisHelper.getKeyValue(jedis, key);
                     Map<String, Object> map = (Map<String, Object>) serializer.deserialize(content);
-
                     TransactionVo transactionVo = new TransactionVo();
                     transactionVo.setDomain(domain);
                     transactionVo.setGlobalTxId(DatatypeConverter.printHexBinary((byte[]) map.get("GLOBAL_TX_ID")));
@@ -80,6 +83,7 @@ public class RedisTransactionDao implements TransactionDao {
     public Integer countOfFindTransactions(String domain) {
         Jedis jedis = null;
         try {
+            // 执行
             jedis = jedisPool.getResource();
             return jedis.keys((domainKeyPrefix.getProperty(domain) + "*").getBytes()).size();
         } catch (Exception e) {
@@ -93,26 +97,22 @@ public class RedisTransactionDao implements TransactionDao {
 
     @Override
     public boolean resetRetryCount(final String domain, final byte[] globalTxId, final byte[] branchQualifier) {
-
         if (domainKeyPrefix.getProperty(domain) == null) {
             return false;
         }
-
         return RedisHelper.execute(jedisPool, new JedisCallback<Boolean>() {
             @Override
             public Boolean doInJedis(Jedis jedis) {
-
+                // 创建事务的 Redis Key
                 byte[] key = RedisHelper.getRedisKey(domainKeyPrefix.getProperty(domain), new TransactionXid(globalTxId, branchQualifier));
+                // 设置 Transaction
                 byte[] content = RedisHelper.getKeyValue(jedis, key);
-
                 Map<String, Object> map = (Map<String, Object>) serializer.deserialize(content);
-
                 map.put("RETRIED_COUNT", 0);
                 map.put("LAST_UPDATE_TIME", new Date());
                 map.put("VERSION", ((Long) map.get("VERSION")) + 1);
-
+                // https://redis.io/commands/hsetnx
                 Long result = jedis.hsetnx(key, ByteUtils.longToBytes((Long) map.get("VERSION")), serializer.serialize(map));
-
                 return result > 0;
             }
         });
