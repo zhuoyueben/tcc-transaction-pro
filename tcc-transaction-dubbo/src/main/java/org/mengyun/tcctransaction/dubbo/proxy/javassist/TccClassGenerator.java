@@ -18,10 +18,14 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * Created by changming.xie on 1/14/17.
  */
-
 public final class TccClassGenerator {
+
+    /**
+     * 动态类标记接口
+     * dynamic class tag interface.
+     */
     public static interface DC {
-    } // dynamic class tag interface.
+    }
 
     private static final AtomicLong CLASS_NAME_COUNTER = new AtomicLong(0);
 
@@ -89,8 +93,9 @@ public final class TccClassGenerator {
     }
 
     public TccClassGenerator addInterface(String cn) {
-        if (mInterfaces == null)
+        if (mInterfaces == null) {
             mInterfaces = new HashSet<String>();
+        }
         mInterfaces.add(cn);
         return this;
     }
@@ -298,6 +303,7 @@ public final class TccClassGenerator {
                     }
                 }
             }
+            mCtc.debugWriteFile("/Users/yunai/test/" + mCtc.getSimpleName().replaceAll(".", "/") + ".class");
             return mCtc.toClass();
         } catch (RuntimeException e) {
             throw e;

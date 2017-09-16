@@ -31,11 +31,14 @@ import java.util.concurrent.atomic.AtomicLong;
  * TccProxy.
  *
  * @author qian.lei
+ * @see com.alibaba.dubbo.common.bytecode.Wrapper
  */
-
 public abstract class TccProxy {
     private static final AtomicLong PROXY_CLASS_COUNTER = new AtomicLong(0);
 
+    /**
+     * TccProxy 包名
+     */
     private static final String PACKAGE_NAME = TccProxy.class.getPackage().getName();
 
     public static final InvocationHandler RETURN_NULL_INVOKER = new InvocationHandler() {
@@ -50,7 +53,7 @@ public abstract class TccProxy {
         }
     };
 
-    private static final Map<ClassLoader, Map<String, Object>> ProxyCacheMap = new WeakHashMap<ClassLoader, Map<String, Object>>();
+    private static final Map<ClassLoader, Map<String, Object>> ProxyCacheMap = new WeakHashMap<ClassLoader, Map<String, Object>>(); // TODO 芋艿：WeakHashMap
 
     private static final Object PendingGenerationMarker = new Object();
 
@@ -72,28 +75,30 @@ public abstract class TccProxy {
      * @return TccProxy instance.
      */
     public static TccProxy getProxy(ClassLoader cl, Class<?>... ics) {
-        if (ics.length > 65535)
+        // 校验接口超过上限
+        if (ics.length > 65535) {
             throw new IllegalArgumentException("interface limit exceeded");
-
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < ics.length; i++) {
-            String itf = ics[i].getName();
-            if (!ics[i].isInterface())
-                throw new RuntimeException(itf + " is not a interface.");
-
-            Class<?> tmp = null;
-            try {
-                tmp = Class.forName(itf, false, cl);
-            } catch (ClassNotFoundException e) {
-            }
-
-            if (tmp != ics[i])
-                throw new IllegalArgumentException(ics[i] + " is not visible from class loader");
-
-            sb.append(itf).append(';');
         }
 
         // use interface class name list as key.
+        StringBuilder sb = new StringBuilder();
+        for (Class<?> ic : ics) {
+            String itf = ic.getName();
+            // 校验是否为接口
+            if (!ic.isInterface()) {
+                throw new RuntimeException(itf + " is not a interface.");
+            }
+            // 加载接口类
+            Class<?> tmp = null;
+            try {
+                tmp = Class.forName(itf, false, cl);
+            } catch (ClassNotFoundException ignored) {
+            }
+            if (tmp != ic) { // 加载接口类失败
+                throw new IllegalArgumentException(ic + " is not visible from class loader");
+            }
+            sb.append(itf).append(';');
+        }
         String key = sb.toString();
 
         // get cache by class loader.
@@ -106,20 +111,23 @@ public abstract class TccProxy {
             }
         }
 
+        // 获得 TccProxy
         TccProxy proxy = null;
         synchronized (cache) {
             do {
+                // 从缓存中获取 TccProxy
                 Object value = cache.get(key);
                 if (value instanceof Reference<?>) {
                     proxy = (TccProxy) ((Reference<?>) value).get();
-                    if (proxy != null)
+                    if (proxy != null) {
                         return proxy;
+                    }
                 }
-
+                // 缓存中不存在，设置生成 TccProxy 代码标记。创建中时，其他创建请求等待，避免并发。
                 if (value == PendingGenerationMarker) {
                     try {
                         cache.wait();
-                    } catch (InterruptedException e) {
+                    } catch (InterruptedException ignored) {
                     }
                 } else {
                     cache.put(key, PendingGenerationMarker);
@@ -131,48 +139,52 @@ public abstract class TccProxy {
 
         long id = PROXY_CLASS_COUNTER.getAndIncrement();
         String pkg = null;
-        TccClassGenerator ccp = null, ccm = null;
+        TccClassGenerator ccp = null; // class generator
+        TccClassGenerator ccm = null; // class generator
         try {
+            // TODO
             ccp = TccClassGenerator.newInstance(cl);
 
-            Set<String> worked = new HashSet<String>();
+            Set<String> worked = new HashSet<String>(); // 已处理方法签名集合。key：方法签名
             List<Method> methods = new ArrayList<Method>();
 
-            for (int i = 0; i < ics.length; i++) {
-                if (!Modifier.isPublic(ics[i].getModifiers())) {
-                    String npkg = ics[i].getPackage().getName();
+            for (Class<?> ic : ics) {
+                // TODO
+                if (!Modifier.isPublic(ic.getModifiers())) {
+                    String npkg = ic.getPackage().getName();
                     if (pkg == null) {
                         pkg = npkg;
                     } else {
-                        if (!pkg.equals(npkg))
+                        if (!pkg.equals(npkg)) {
                             throw new IllegalArgumentException("non-public interfaces from different packages");
+                        }
                     }
                 }
-                ccp.addInterface(ics[i]);
-
-                for (Method method : ics[i].getMethods()) {
+                // 添加接口
+                ccp.addInterface(ic);
+                // 处理接口方法
+                for (Method method : ic.getMethods()) {
+                    // 添加方法签名到已处理方法签名集合
                     String desc = ReflectUtils.getDesc(method);
-                    if (worked.contains(desc))
+                    if (worked.contains(desc)) {
                         continue;
+                    }
                     worked.add(desc);
-
+                    // 生成接口方法实现代码
                     int ix = methods.size();
                     Class<?> rt = method.getReturnType();
                     Class<?>[] pts = method.getParameterTypes();
-
                     StringBuilder code = new StringBuilder("Object[] args = new Object[").append(pts.length).append("];");
-                    for (int j = 0; j < pts.length; j++)
+                    for (int j = 0; j < pts.length; j++) {
                         code.append(" args[").append(j).append("] = ($w)$").append(j + 1).append(";");
-                    code.append(" Object ret = handler.invoke(this, methods[" + ix + "], args);");
-                    if (!Void.TYPE.equals(rt))
+                    }
+                    code.append(" Object ret = handler.invoke(this, methods[").append(ix).append("], args);");
+                    if (!Void.TYPE.equals(rt)) {
                         code.append(" return ").append(asArgument(rt, "ret")).append(";");
-
+                    }
                     methods.add(method);
-
-                    StringBuilder compensableDesc = new StringBuilder();
-
+                    // 添加方法
                     Compensable compensable = method.getAnnotation(Compensable.class);
-
                     if (compensable != null) {
                         ccp.addMethod(true, method.getName(), method.getModifiers(), rt, pts, method.getExceptionTypes(), code.toString());
                     } else {
@@ -181,27 +193,42 @@ public abstract class TccProxy {
                 }
             }
 
-            if (pkg == null)
+            // 设置包路径
+            if (pkg == null) {
                 pkg = PACKAGE_NAME;
+            }
 
             // create ProxyInstance class.
+            // 设置类名
             String pcn = pkg + ".proxy" + id;
             ccp.setClassName(pcn);
+            // 添加静态属性 methods
             ccp.addField("public static java.lang.reflect.Method[] methods;");
+            // 添加属性 handler
             ccp.addField("private " + InvocationHandler.class.getName() + " handler;");
+            // 添加构造方法，参数 handler
             ccp.addConstructor(Modifier.PUBLIC, new Class<?>[]{InvocationHandler.class}, new Class<?>[0], "handler=$1;");
+            // 添加构造方法，参数 空
             ccp.addDefaultConstructor();
+            // 生成类
             Class<?> clazz = ccp.toClass();
+            // 设置静态属性 methods
             clazz.getField("methods").set(null, methods.toArray(new Method[0]));
 
             // create TccProxy class.
-            String fcn = TccProxy.class.getName() + id;
             ccm = TccClassGenerator.newInstance(cl);
+            // 设置类名
+            String fcn = TccProxy.class.getName() + id;
             ccm.setClassName(fcn);
+            // 添加构造方法，参数 空
             ccm.addDefaultConstructor();
+            // 设置父类为 TccProxy.class
             ccm.setSuperClass(TccProxy.class);
+            // 添加方法 #newInstance(handler)
             ccm.addMethod("public Object newInstance(" + InvocationHandler.class.getName() + " h){ return new " + pcn + "($1); }");
+            // 生成类
             Class<?> pc = ccm.toClass();
+            // 创建 TccProxy 对象
             proxy = (TccProxy) pc.newInstance();
         } catch (RuntimeException e) {
             throw e;
@@ -209,15 +236,19 @@ public abstract class TccProxy {
             throw new RuntimeException(e.getMessage(), e);
         } finally {
             // release TccClassGenerator
-            if (ccp != null)
+            if (ccp != null) {
                 ccp.release();
-            if (ccm != null)
+            }
+            if (ccm != null) {
                 ccm.release();
+            }
+            // 唤醒缓存 wait
             synchronized (cache) {
-                if (proxy == null)
+                if (proxy == null) {
                     cache.remove(key);
-                else
+                } else {
                     cache.put(key, new WeakReference<TccProxy>(proxy));
+                }
                 cache.notifyAll();
             }
         }
