@@ -3,14 +3,23 @@ package org.mengyun.tcctransaction.sample.http.capital.domain.entity;
 import java.math.BigDecimal;
 
 /**
+ * 资金账户余额
+ *
  * Created by changming.xie on 4/2/16.
  */
 public class CapitalAccount {
 
+    /**
+     * 账户编号
+     */
     private long id;
-
+    /**
+     * 用户编号
+     */
     private long userId;
-
+    /**
+     * 余额
+     */
     private BigDecimal balanceAmount;
 
     public long getUserId() {

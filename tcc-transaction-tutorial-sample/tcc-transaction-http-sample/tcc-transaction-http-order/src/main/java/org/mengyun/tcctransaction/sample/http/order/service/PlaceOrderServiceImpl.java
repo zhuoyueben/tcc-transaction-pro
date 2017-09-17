@@ -15,6 +15,8 @@ import java.math.BigDecimal;
 import java.util.List;
 
 /**
+ * 支付订单服务实现
+ *
  * Created by changming.xie on 4/1/16.
  */
 @Service
@@ -29,33 +31,30 @@ public class PlaceOrderServiceImpl {
     @Autowired
     PaymentServiceImpl paymentService;
 
-// TODO 疑问：这里需要注解，@Transactional
     public String placeOrder(long payerUserId, long shopId, List<Pair<Long, Integer>> productQuantities, BigDecimal redPacketPayAmount) {
+        // 获取商店
         Shop shop = shopRepository.findById(shopId);
-
+        // 创建订单
         Order order = orderService.createOrder(payerUserId, shop.getOwnerUserId(), productQuantities);
-
+        // 发起支付
         Boolean result = false;
-
         try {
             paymentService.makePayment(order, redPacketPayAmount, order.getTotalAmount().subtract(redPacketPayAmount));
-
         } catch (ConfirmingException confirmingException) {
-            //exception throws with the tcc transaction status is CONFIRMING,
-            //when tcc transaction is confirming status,
+            // exception throws with the tcc transaction status is CONFIRMING,
+            // when tcc transaction is confirming status,
             // the tcc transaction recovery will try to confirm the whole transaction to ensure eventually consistent.
-
             result = true;
         } catch (CancellingException cancellingException) {
-            //exception throws with the tcc transaction status is CANCELLING,
-            //when tcc transaction is under CANCELLING status,
+            // exception throws with the tcc transaction status is CANCELLING,
+            // when tcc transaction is under CANCELLING status,
             // the tcc transaction recovery will try to cancel the whole transaction to ensure eventually consistent.
         } catch (Throwable e) {
-            //other exceptions throws at TRYING stage.
-            //you can retry or cancel the operation.
+            // other exceptions throws at TRYING stage.
+            // you can retry or cancel the operation.
             e.printStackTrace();
         }
-
         return order.getMerchantOrderNo();
     }
+
 }
