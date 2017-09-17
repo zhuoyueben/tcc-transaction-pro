@@ -34,10 +34,14 @@ import java.util.concurrent.atomic.AtomicLong;
  * @see com.alibaba.dubbo.common.bytecode.Wrapper
  */
 public abstract class TccProxy {
+
+    /**
+     * Proxy Class 计数
+     */
     private static final AtomicLong PROXY_CLASS_COUNTER = new AtomicLong(0);
 
     /**
-     * TccProxy 包名
+     * Tcc Proxy 包名
      */
     private static final String PACKAGE_NAME = TccProxy.class.getPackage().getName();
 
@@ -53,8 +57,17 @@ public abstract class TccProxy {
         }
     };
 
+    /**
+     * Proxy 对象缓存
+     * key ：ClassLoader
+     * value.key ：Tcc Proxy 标识。使用 Tcc Proxy 实现接口名拼接
+     * value.value ：Tcc Proxy 工厂
+     */
     private static final Map<ClassLoader, Map<String, Object>> ProxyCacheMap = new WeakHashMap<ClassLoader, Map<String, Object>>(); // TODO 芋艿：WeakHashMap
 
+    /**
+     * 等待生成 Proxy Class 生成标记
+     */
     private static final Object PendingGenerationMarker = new Object();
 
     /**
@@ -111,11 +124,11 @@ public abstract class TccProxy {
             }
         }
 
-        // 获得 TccProxy
+        // 获得 TccProxy 工厂
         TccProxy proxy = null;
         synchronized (cache) {
             do {
-                // 从缓存中获取 TccProxy
+                // 从缓存中获取 TccProxy 工厂
                 Object value = cache.get(key);
                 if (value instanceof Reference<?>) {
                     proxy = (TccProxy) ((Reference<?>) value).get();
@@ -139,23 +152,24 @@ public abstract class TccProxy {
 
         long id = PROXY_CLASS_COUNTER.getAndIncrement();
         String pkg = null;
-        TccClassGenerator ccp = null; // class generator
-        TccClassGenerator ccm = null; // class generator
+        TccClassGenerator ccp = null; // proxy class generator
+        TccClassGenerator ccm = null; // proxy factory generator
         try {
-            // TODO
+            // 创建 Tcc class 代码生成器
             ccp = TccClassGenerator.newInstance(cl);
 
             Set<String> worked = new HashSet<String>(); // 已处理方法签名集合。key：方法签名
-            List<Method> methods = new ArrayList<Method>();
+            List<Method> methods = new ArrayList<Method>(); // 已处理方法集合。
 
+            // 处理接口
             for (Class<?> ic : ics) {
-                // TODO
+                // 非 public 接口，使用接口包名
                 if (!Modifier.isPublic(ic.getModifiers())) {
                     String npkg = ic.getPackage().getName();
                     if (pkg == null) {
                         pkg = npkg;
                     } else {
-                        if (!pkg.equals(npkg)) {
+                        if (!pkg.equals(npkg)) { // 实现了两个非 public 的接口，
                             throw new IllegalArgumentException("non-public interfaces from different packages");
                         }
                     }
@@ -216,6 +230,7 @@ public abstract class TccProxy {
             clazz.getField("methods").set(null, methods.toArray(new Method[0]));
 
             // create TccProxy class.
+            // 创建 Tcc class 代码生成器
             ccm = TccClassGenerator.newInstance(cl);
             // 设置类名
             String fcn = TccProxy.class.getName() + id;
@@ -274,6 +289,13 @@ public abstract class TccProxy {
     protected TccProxy() {
     }
 
+    /**
+     * 生成返回语句
+     *
+     * @param cl 返回类型
+     * @param name 变量名
+     * @return 返回语句
+     */
     private static String asArgument(Class<?> cl, String name) {
         if (cl.isPrimitive()) {
             if (Boolean.TYPE == cl)
@@ -296,4 +318,5 @@ public abstract class TccProxy {
         }
         return "(" + ReflectUtils.getName(cl) + ")" + name;
     }
+
 }

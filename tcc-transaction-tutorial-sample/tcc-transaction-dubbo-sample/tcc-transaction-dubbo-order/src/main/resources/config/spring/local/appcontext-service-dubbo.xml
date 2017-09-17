@@ -14,6 +14,8 @@
 
     <!--<dubbo:registry id="capitalRpcZk" address="multicast://224.5.6.7:1234?unicast=false"/>-->
 
+    <dubbo:provider proxy="tccJdk"/>
+
     <dubbo:application name="sample-dubbo-order"/>
 
     <dubbo:registry protocol="zookeeper" address="${zookeeper.address}"
@@ -22,16 +24,16 @@
 
     <!--<dubbo:consumer proxy="javassist" />-->
 
-    <dubbo:reference id="captialTradeOrderService"
+    <dubbo:reference proxy="tccJdk" id="captialTradeOrderService"
                      interface="org.mengyun.tcctransaction.sample.dubbo.capital.api.CapitalTradeOrderService" timeout="5000"/>
 
-    <dubbo:reference id="redPacketTradeOrderService"
+    <dubbo:reference proxy="tccJdk" id="redPacketTradeOrderService"
                      interface="org.mengyun.tcctransaction.sample.dubbo.redpacket.api.RedPacketTradeOrderService" timeout="60000"/>
 
-    <dubbo:reference id="redPacketAccountService"
+    <dubbo:reference proxy="tccJdk" id="redPacketAccountService"
                      interface="org.mengyun.tcctransaction.sample.dubbo.redpacket.api.RedPacketAccountService" timeout="60000"/>
 
-    <dubbo:reference id="capitalAccountService"
+    <dubbo:reference proxy="tccJdk" id="capitalAccountService"
                      interface="org.mengyun.tcctransaction.sample.dubbo.capital.api.CapitalAccountService" timeout="60000"/>
 
 </beans>

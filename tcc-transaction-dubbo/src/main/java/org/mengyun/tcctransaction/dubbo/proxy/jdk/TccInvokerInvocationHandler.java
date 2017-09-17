@@ -14,10 +14,15 @@ import org.mengyun.tcctransaction.utils.ReflectionUtils;
 import java.lang.reflect.Method;
 
 /**
+ * Tcc 调用处理器
+ *
  * Created by changming.xie on 2/26/17.
  */
 public class TccInvokerInvocationHandler extends InvokerInvocationHandler {
 
+    /**
+     * proxy
+     */
     private Object target;
 
     public TccInvokerInvocationHandler(Invoker<?> handler) {
@@ -30,24 +35,22 @@ public class TccInvokerInvocationHandler extends InvokerInvocationHandler {
     }
 
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-
         Compensable compensable = method.getAnnotation(Compensable.class);
-
         if (compensable != null) {
-
+            // 设置 @Compensable 属性
             if (StringUtils.isEmpty(compensable.confirmMethod())) {
                 ReflectionUtils.changeAnnotationValue(compensable, "confirmMethod", method.getName());
                 ReflectionUtils.changeAnnotationValue(compensable, "cancelMethod", method.getName());
                 ReflectionUtils.changeAnnotationValue(compensable, "transactionContextEditor", DubboTransactionContextEditor.class);
                 ReflectionUtils.changeAnnotationValue(compensable, "propagation", Propagation.SUPPORTS);
             }
-
+            // 生成切面
             ProceedingJoinPoint pjp = new MethodProceedingJoinPoint(proxy, target, method, args);
+            // 执行
             return FactoryBuilder.factoryOf(ResourceCoordinatorAspect.class).getInstance().interceptTransactionContextMethod(pjp);
         } else {
             return super.invoke(target, method, args);
         }
     }
-
 
 }

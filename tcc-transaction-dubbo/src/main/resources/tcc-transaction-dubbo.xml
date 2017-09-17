@@ -7,4 +7,5 @@
        http://code.alibabatech.com/schema/dubbo http://code.alibabatech.com/schema/dubbo/dubbo.xsd">
 
     <dubbo:provider proxy="tccJavassist"/>
+    <!--<dubbo:provider proxy="tccJdk"/>-->
 </beans>

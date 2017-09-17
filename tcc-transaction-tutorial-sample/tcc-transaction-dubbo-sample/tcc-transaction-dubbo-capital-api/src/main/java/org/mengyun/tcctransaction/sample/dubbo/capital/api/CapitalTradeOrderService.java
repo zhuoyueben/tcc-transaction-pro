@@ -9,6 +9,6 @@ import org.mengyun.tcctransaction.sample.dubbo.capital.api.dto.CapitalTradeOrder
 public interface CapitalTradeOrderService {
 
     @Compensable
-    public String record(CapitalTradeOrderDto tradeOrderDto);
+    String record(CapitalTradeOrderDto tradeOrderDto);
 
 }

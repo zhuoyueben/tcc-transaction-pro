@@ -8,6 +8,8 @@ import java.lang.reflect.Proxy;
 import java.util.Map;
 
 /**
+ * 反射工具类
+ *
  * Created by changmingxie on 11/22/15.
  */
 public class ReflectionUtils {
@@ -19,28 +21,31 @@ public class ReflectionUtils {
         }
     }
 
+    /**
+     * 设置注解属性值
+     *
+     * @param annotation 注解
+     * @param key 属性
+     * @param newValue 新值
+     * @return 老值
+     * @throws NoSuchFieldException 当属性不存在时
+     * @throws SecurityException 当 SecurityException
+     * @throws IllegalArgumentException 当参数不正确时
+     * @throws IllegalAccessException 当不允许访问时
+     */
     public static Object changeAnnotationValue(Annotation annotation, String key, Object newValue) throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
         Object handler = Proxy.getInvocationHandler(annotation);
-
-        Field f;
-
-        f = handler.getClass().getDeclaredField("memberValues");
-
+        Field f = handler.getClass().getDeclaredField("memberValues");
         f.setAccessible(true);
-
         Map<String, Object> memberValues;
-
         memberValues = (Map<String, Object>) f.get(handler);
-
+        // 属性不存在 或 属性类型不正确
         Object oldValue = memberValues.get(key);
-
         if (oldValue == null || oldValue.getClass() != newValue.getClass()) {
-
             throw new IllegalArgumentException();
         }
-
+        // 设置
         memberValues.put(key, newValue);
-
         return oldValue;
     }
 

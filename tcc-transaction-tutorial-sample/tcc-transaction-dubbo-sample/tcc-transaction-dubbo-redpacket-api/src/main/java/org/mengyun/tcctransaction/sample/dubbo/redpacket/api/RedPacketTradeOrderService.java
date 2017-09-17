@@ -9,5 +9,5 @@ import org.mengyun.tcctransaction.sample.dubbo.redpacket.api.dto.RedPacketTradeO
 public interface RedPacketTradeOrderService {
 
     @Compensable
-    public String record(RedPacketTradeOrderDto tradeOrderDto);
+    String record(RedPacketTradeOrderDto tradeOrderDto);
 }
