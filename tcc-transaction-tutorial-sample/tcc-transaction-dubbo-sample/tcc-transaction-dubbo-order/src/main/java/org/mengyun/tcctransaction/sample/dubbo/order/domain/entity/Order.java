@@ -39,6 +39,7 @@ public class Order implements Serializable {
     /**
      * 订单状态
      * - DRAFT ：草稿
+     * - PAYING ：支付中
      * - CONFIRMED ：支付成功
      * - PAY_FAILED ：支付失败
      */
